@@ -8,5 +8,6 @@ RUN apt-get update -y
 RUN apt-get install nginx -y 
 COPY ./index.html /var/www/html/
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+RUN apt install iputils-ping -y
 CMD ["nginx"]
 

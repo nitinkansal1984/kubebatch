@@ -1,0 +1,24 @@
+## List which resource comes under which api-group
+$ kubectl api-resources
+
+### Create a role with some permissions on specified resources under a namespace
+$ kubectl create role my-custom-role --verb=list --verb=get --resource=pods --resource=services --namespace k8boss
+
+##ClusterRole is not much differs:
+It is almost same with Role definition only without a namespace and it applies to all namespaces
+$ kubectl create role my-custom-role --verb=list --verb=get --resource=pods --resource=services
+
+## Create a service account
+$ kubectl create serviceaccount custom-sa -n k8boss
+$ kubectl auth can-i list pods --as=system:serviceaccount:k8boss:custom-sa -n k8boss
+
+## Create rolebinding
+$ kubectl create rolebinding my-custom-role-binding --role=my-custom-role --serviceaccount=k8boss:custom-sa --namespace k8boss
+
+ClusterRoleBinding is not much differs:
+$ kubectl create clusterrolebinding my-custom-clusterrole-binding --clusterrole=my-custom-cluster-role --serviceaccount=k8boss:custom-sa
+## lets check what permission this pod has now
+$ kubectl auth can-i list pods --as=system:serviceaccount:k8boss:custom-sa -n k8boss
+
+### Command to check access to aPI
+curl -k  https://35.226.193.217/api/v1/namespaces -H "Authorization: Bearer "
