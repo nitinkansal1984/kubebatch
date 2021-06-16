@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: httpd
+  name: httpd
+spec:
+  containers:
+  - image: httpd
+    name: httpd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    run: nginx
+spec:
+  type: ClusterIP
+  selector:
+    run: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpd
+  labels:
+    run: httpd
+spec:
+  type: ClusterIP
+  selector:
+    run: httpd
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: myapp1.kubebox.in
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: nginx
+          servicePort: 80
+  - host: myapp2.kubebox.in
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: httpd
+          servicePort: 80
+

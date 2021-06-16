@@ -3,8 +3,8 @@ kind: Pod
 metadata:
   name: security-context-demo-2
 spec:
-  #  securityContext:
-  #  runAsUser: 1000
+  securityContext:
+    runAsUser: 1000
   containers:
   - name: sec-ctx-demo-2
     image: gcr.io/google-samples/node-hello:1.0

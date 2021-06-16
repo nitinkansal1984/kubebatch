@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pod-nginx
+  name: pod-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: pod-nginx
+        env: dev
+    spec:
+      containers:
+      - name: pod-nginx
+        image: hashicorp/http-echo:0.2.3
+        args:
+        - "-text=nginx"
+        
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pod-python
+  name: pod-python
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-python
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: pod-python
+        env: dev
+    spec:
+      containers:
+      - name: pod-python
+        image: hashicorp/http-echo:0.2.3
+        args:
+        - "-text=python"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: myapp
+  name: myapp
+spec:
+  ports:
+  - port: 5678
+    protocol: TCP
+    targetPort: 5678
+  selector:
+    env: dev

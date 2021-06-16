@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: myapp.kubebox.in
+  creationTimestamp: null
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    run: nginx
+  type: LoadBalancer
+status:
+  loadBalancer: {}

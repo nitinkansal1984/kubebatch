@@ -1,24 +1,107 @@
-## List which resource comes under which api-group
-$ kubectl api-resources
+kubectl create ns red
+kubectl create ns blue
 
-### Create a role with some permissions on specified resources under a namespace
-$ kubectl create role my-custom-role --verb=list --verb=get --resource=pods --resource=services --namespace k8boss
+kubectl -n red create role secret-manager --verb=get --resource=secrets
+kubectl -n red create rolebinding secret-manager --role=secret-manager
+--user=jane
+kubectl -n blue create role secret-manager --verb=get --verb=list
+--resource=secrets
+kubectl -n blue create rolebinding secret-manager --role=secret-manager
+--user=jane
 
-##ClusterRole is not much differs:
-It is almost same with Role definition only without a namespace and it applies to all namespaces
-$ kubectl create role my-custom-role --verb=list --verb=get --resource=pods --resource=services
 
-## Create a service account
-$ kubectl create serviceaccount custom-sa -n k8boss
-$ kubectl auth can-i list pods --as=system:serviceaccount:k8boss:custom-sa -n k8boss
+# checkubectl permissions
+kubectl -n red auth can-i -h
+kubectl -n red auth can-i create pods --as jane 
+kubectl -n red auth can-i get secrets --as jane 
+kubectl -n red auth can-i list secrets --as jane 
 
-## Create rolebinding
-$ kubectl create rolebinding my-custom-role-binding --role=my-custom-role --serviceaccount=k8boss:custom-sa --namespace k8boss
+kubectl -n blue auth can-i list secrets --as jane 
+kubectl -n blue auth can-i get secrets --as jane 
 
-ClusterRoleBinding is not much differs:
-$ kubectl create clusterrolebinding my-custom-clusterrole-binding --clusterrole=my-custom-cluster-role --serviceaccount=k8boss:custom-sa
-## lets check what permission this pod has now
-$ kubectl auth can-i list pods --as=system:serviceaccount:k8boss:custom-sa -n k8boss
+kubectl -n default auth can-i get secrets --as jane
 
-### Command to check access to aPI
-curl -k  https://35.226.193.217/api/v1/namespaces -H "Authorization: Bearer "
+Extend the scenerio:
+
+kubectl create clusterrole deploy-deleter --verb=delete --resource=deployment
+
+kubectl create clusterrolebinding deploy-deleter --clusterrole=deploy-deleter --user=jane
+
+kubectl -n red create rolebinding deploy-deleter --clusterrole=deploy-deleter --user=jim
+
+
+
+
+# test jane
+kubectl auth can-i delete deploy --as jane 
+kubectl auth can-i delete deploy --as jane -n red 
+kubectl auth can-i delete deploy --as jane -n blue 
+kubectl auth can-i delete deploy --as jane -A 
+kubectl auth can-i create deploy --as jane --all-namespaces 
+
+
+# test jim
+kubectl auth can-i delete deploy --as jim 
+kubectl auth can-i delete deploy --as jim -A 
+kubectl auth can-i delete deploy --as jim -n red 
+kubectl auth can-i delete deploy --as jim -n blue 
+
+
+### Service account
+
+# from inside a Pod we can do:
+cat /run/secrets/kubernetes.io/serviceaccount/token
+
+curl https://kubernetes.default -k -H "Authorization: Bearer SA_TOKEN"
+
+Use always:
+automountServiceAccountToken: false
+
+Now give some permissions to service account and then check
+First check if we have delete secret access for service account?
+
+# kubectl auth can-i delete secret --as system:serviceaccount:default:custom-sa
+# kubectl create clusterrolebinding accessor --clusterrole edit --serviceaccount default:custom-sa
+
+# kubectl auth can-i delete secret --as system:serviceaccount:default:custom-sa
+
+
+
+
+## Create Account
+
+openssl genrsa -out jane.key 2048
+openssl req -new -key jane.key -out jane.csr # only set Common Name = jane
+
+
+# create CertificateSigningRequest with base64 jane.csr
+https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests
+
+cat jane.csr | base64 -w 0
+
+
+Download the certificate:
+kubectl get csr myuser -o jsonpath='{.status.certificate}'| base64 -d > jane.crt
+
+Assign some permissions
+
+kubectl create role janerole --verb=create --verb=get --verb=list --verb=update --verb=delete --resource=pods
+kubectl create rolebinding jane-rolebinding --role=janerole --user=jane
+
+
+# add new KUBECONFIG
+
+convert jane.crt and jane.key in to base64 encode form and update config file.
+
+kubectl config set-credentials jane --client-key=jane.key
+--client-certificate=jane.crt --embed-certs=true
+
+kubectl config set-context jane --cluster=docker-desktop --user=jane
+
+kubectl config view
+
+kubectl config get-contexts
+
+kubectl config use-context jane
+
+
