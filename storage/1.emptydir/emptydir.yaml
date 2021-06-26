@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shared-volume-emptydir
+spec:
+  containers:
+  - name: alpine1
+    image: alpine
+    command: ["/bin/sleep", "999999"]
+    volumeMounts:
+    - mountPath: /alpine1
+      name: data
+
+  - name: alpine2
+    image: alpine
+    command: ["/bin/sleep", "999999"]
+    volumeMounts:
+    - mountPath: /alpine2
+      name: data
+
+  volumes:
+  - name: data
+    emptyDir: {}
